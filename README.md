@@ -46,6 +46,7 @@ It shows what it will do and asks before changing anything. Useful options:
 ./install.py --remove filesearch                   # remove one feature
 ./install.py --uninstall                           # remove everything XTend added
 ./install.py --update                              # re-apply after caelestia-shell updates
+./install.py --restart                             # restart the shell (if a restart was skipped)
 ```
 
 Feature names: `cheatsheet`, `filesearch`, `google`, `hotspot`. Add `--noconfirm` to accept
@@ -63,6 +64,7 @@ Nothing happens before you confirm, and everything is undone by `--uninstall`.
   every change. If the shell fails to load afterwards, the installer rolls back automatically.
 - **Packages.** `plocate` and `fd` (file search), `qrencode` and `create_ap` (hotspot), via
   `pacman` and your AUR helper. The daily file index (`plocate-updatedb.timer`) is turned on.
+  Building `create_ap` asks to import its author's PGP key; that's expected, answer yes.
 - **Settings.** Hotspot name/password and the Exa key go in `~/.config/caelestia/.env`, readable
   only by you. Uninstalling keeps this file.
 - **Keybinds.** `Super + /` goes in a marked block in `~/.config/caelestia/hypr-user.lua`
@@ -71,6 +73,8 @@ Nothing happens before you confirm, and everything is undone by `--uninstall`.
   existing keybinds so the cheatsheet can show them (`scripts/describe-keybinds.py`, with a
   `.xtend-bak` backup).
 - **Shell restart.** Every running caelestia shell is restarted, and its log checked for errors.
+  While the installer runs it keeps your screen from locking (caelestia's idle inhibitor), and
+  it never restarts the shell while the screen is locked: it waits for you to unlock first.
 
 What was installed is recorded in `~/.config/caelestia/xtend.json`.
 

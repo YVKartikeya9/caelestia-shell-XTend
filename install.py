@@ -441,9 +441,62 @@ def caelestia_pids():
     return pids
 
 
+def ipc(pid, *args):
+    """Call a caelestia IPC function on one shell instance; returns its output."""
+    r = run(["qs", "ipc", "--pid", pid, "call", *args])
+    if r.returncode != 0:
+        return None
+    out = r.stdout.strip().splitlines()
+    return out[-1].strip() if out else ""  # "" = success with no return value
+
+
+class KeepAwake:
+    """Turn on caelestia's idle inhibitor while installing, so the screen
+    can't lock mid-install (the lock screen is part of the shell, and
+    restarting a shell that holds the lock leaves Hyprland's crashed-lock
+    screen), then restore the previous setting."""
+
+    def __enter__(self):
+        self.enabled = []
+        if have("qs"):
+            for pid in caelestia_pids():
+                if ipc(pid, "idleInhibitor", "isEnabled") == "false" and ipc(pid, "idleInhibitor", "enable") is not None:
+                    self.enabled.append(pid)
+        return self
+
+    def __exit__(self, *exc):
+        if self.enabled:
+            for pid in caelestia_pids():  # possibly new instances after a restart
+                ipc(pid, "idleInhibitor", "disable")
+        return False
+
+
+def wait_until_unlocked(timeout=1800):
+    """Never restart a shell that's showing the lock screen."""
+    def locked():
+        return any(ipc(p, "lock", "isLocked") == "true" for p in caelestia_pids())
+    if not locked():
+        return True
+    say("   your screen is locked; waiting for you to unlock it before restarting the shell (Ctrl+C to skip)")
+    end = time.time() + timeout
+    try:
+        while time.time() < end:
+            time.sleep(3)
+            if not locked():
+                return True
+    except KeyboardInterrupt:
+        pass
+    return False
+
+
 def restart_shell():
+    """Restart every caelestia shell. Returns True/False for clean/errors, or
+    None if it was skipped because the screen stayed locked."""
     if not have("qs"):
         return True
+    if not wait_until_unlocked():
+        warn("skipped restarting the shell; run ./install.py --restart when you're back")
+        return None
     # Kill by PID: `caelestia shell -k` only targets the config path that
     # `qs -c caelestia` currently resolves to, and misses a stock instance
     # that was started from /etc/xdg before XTend created the user copy.
@@ -558,6 +611,11 @@ def do_install(names, state, dry):
     if not ask("Go ahead?"):
         return 1
 
+    with KeepAwake():
+        return _install(todo, pkgs, aur, version, state)
+
+
+def _install(todo, pkgs, aur, version, state):
     head("Installing")
     created_copy = state.pop("_created_copy", False)
     prev_features = list(state.get("features", []))
@@ -583,7 +641,7 @@ def do_install(names, state, dry):
     if "cheatsheet" in chosen:
         describe_keybinds(False)
     head("Restarting the shell")
-    if not restart_shell():
+    if restart_shell() is False:
         rollback(state, prev_features, created_copy)
         return 1
     for f, _ in todo:
@@ -688,6 +746,7 @@ def main():
     p.add_argument("--uninstall", action="store_true", help="remove everything XTend added")
     p.add_argument("--update", action="store_true", help="re-apply features after a caelestia-shell update")
     p.add_argument("--check", action="store_true", help="show what would happen, change nothing")
+    p.add_argument("--restart", action="store_true", help="just restart the shell (e.g. after a skipped restart)")
     p.add_argument("--noconfirm", action="store_true", help="use defaults for every question")
     a = p.parse_args()
     NOCONFIRM = a.noconfirm
@@ -701,6 +760,8 @@ def main():
             sys.exit(f"unknown feature(s): {', '.join(unknown)}")
         return names
 
+    if a.restart:
+        return 0 if restart_shell() else 1
     if a.uninstall:
         return do_remove([n for n in state.get("features", []) if not BY_NAME[n].hidden], state, a.check)
     if a.remove:

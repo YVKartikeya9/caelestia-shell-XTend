@@ -148,7 +148,9 @@ Singleton {
     function rank(query: string, paths: var, typeLines: var): void {
         const q = query.toLowerCase();
 
-        const scored = paths.map((path, i) => {
+        const scored = paths.map((rawPath, i) => {
+            // fd prints folders with a trailing slash, which would leave the name empty
+            const path = rawPath.length > 1 ? rawPath.replace(/\/+$/, "") : rawPath;
             const parts = path.split("/");
             const name = parts[parts.length - 1] || path;
             const isDir = (typeLines[i] ?? "").startsWith("directory");
