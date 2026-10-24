@@ -13,6 +13,7 @@ Singleton {
 
     readonly property string envPath: `${Paths.config}/.env`
 
+    property string hotspotSsid: ""
     property string hotspotPassword: ""
     property string exaApiKey: ""
 
@@ -32,6 +33,7 @@ Singleton {
                 values[match[1]] = root.unescapeValue(match[2]);
         }
 
+        root.hotspotSsid = values.HOTSPOT_SSID ?? "";
         root.hotspotPassword = values.HOTSPOT_PASS ?? "";
         root.exaApiKey = values.EXA_API_KEY ?? "";
     }

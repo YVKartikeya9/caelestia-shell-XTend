@@ -12,6 +12,7 @@ import qs.modules.sidebar as Sidebar
 import qs.modules.utilities as Utilities
 import qs.modules.bar.popouts as BarPopouts
 import qs.modules.utilities.toasts as Toasts
+import qs.modules.hotspotqr as HotspotQr
 
 Item {
     id: root
@@ -33,6 +34,7 @@ Item {
     readonly property alias utilities: utilities
     readonly property alias toasts: toasts
     readonly property alias sidebar: sidebar
+    readonly property alias hotspotQr: hotspotQr
 
     anchors.fill: parent
     anchors.margins: borderThickness
@@ -132,6 +134,16 @@ Item {
 
         anchors.bottom: parent.bottom
         anchors.right: parent.right
+    }
+
+    HotspotQr.Wrapper {
+        id: hotspotQr
+
+        screenState: root.screenState
+
+        anchors.centerIn: parent
+
+        z: 100
     }
 
     Toasts.Toasts {

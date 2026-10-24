@@ -72,6 +72,12 @@ Region {
         width: panel.width * (1 - root.panels.popoutsWrapper.offsetScale)
     }
 
+    R {
+        panel: root.panels.hotspotQr
+        width: panel.width * (1 - root.panels.hotspotQr.offsetScale)
+        height: panel.height * (1 - root.panels.hotspotQr.offsetScale)
+    }
+
     component R: Region {
         required property Item panel
 
