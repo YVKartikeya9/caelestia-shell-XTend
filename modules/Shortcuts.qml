@@ -108,6 +108,7 @@ Scope {
         }
     }
 
+    // xtend:cheatsheet
     // qmllint disable unresolved-type
     CustomShortcut {
         // qmllint enable unresolved-type
@@ -120,7 +121,7 @@ Scope {
             screenState.cheatsheet = !screenState.cheatsheet;
         }
     }
-
+    // xtend:cheatsheet end
     IpcHandler {
         function toggle(drawer: string): void {
             if (list().split("\n").includes(drawer)) {

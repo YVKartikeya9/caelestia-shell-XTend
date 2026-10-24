@@ -12,7 +12,7 @@ Scope {
         Notifs;
         Players;
         Brightness;
-        Hotspot;
+        Hotspot; // xtend:hotspot
         Weather.reload();
 
         if (GlobalConfig.utilities.vpn.enabled)

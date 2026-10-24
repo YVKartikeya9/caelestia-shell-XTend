@@ -72,18 +72,20 @@ Region {
         width: panel.width * (1 - root.panels.popoutsWrapper.offsetScale)
     }
 
+    // xtend:hotspot
     R {
         panel: root.panels.hotspotQr
         width: panel.width * (1 - root.panels.hotspotQr.offsetScale)
         height: panel.height * (1 - root.panels.hotspotQr.offsetScale)
     }
-
+    // xtend:hotspot end
+    // xtend:cheatsheet
     R {
         panel: root.panels.cheatsheet
         width: panel.width * (1 - root.panels.cheatsheet.offsetScale)
         height: panel.height * (1 - root.panels.cheatsheet.offsetScale)
     }
-
+    // xtend:cheatsheet end
     component R: Region {
         required property Item panel
 

@@ -8,6 +8,7 @@ Item {
 
     required property var modelData
     required property var list
+    // xtend:filesearch
 
     readonly property bool hasSecondary:
         Boolean(root.modelData?.secondaryIcon && root.modelData?.onSecondaryClicked)
@@ -31,6 +32,7 @@ Item {
         const post = root.escapeHtml(text.slice(idx + query.length));
         return `${pre}<b>${match}</b>${post}`;
     }
+    // xtend:filesearch end
 
     implicitHeight: Tokens.sizes.launcher.itemHeight
 
@@ -62,18 +64,20 @@ Item {
             anchors.leftMargin: Tokens.spacing.medium
             anchors.verticalCenter: icon.verticalCenter
 
-            implicitWidth: parent.width - icon.width - (root.hasSecondary ? secondaryButton.width + Tokens.spacing.medium : 0)
+            implicitWidth: parent.width - icon.width - (root.hasSecondary ? secondaryButton.width + Tokens.spacing.medium : 0) // xtend:filesearch
             implicitHeight: name.implicitHeight + desc.implicitHeight
 
             StyledText {
                 id: name
 
+                // xtend:filesearch
                 textFormat: root.modelData?.query ? Text.StyledText : Text.PlainText
                 text: root.modelData?.query ? root.highlighted(root.modelData?.name ?? "", root.modelData.query) : (root.modelData?.name ?? "")
                 font: Tokens.font.body.medium
 
                 elide: Text.ElideRight
                 width: parent.width
+                // xtend:filesearch end
             }
 
             StyledText {
@@ -83,12 +87,13 @@ Item {
                 font: Tokens.font.body.small
                 color: Colours.palette.m3outline
 
-                elide: Text.ElideMiddle
-                width: parent.width
+                elide: Text.ElideMiddle // xtend:filesearch
+                width: parent.width // xtend:filesearch
 
                 anchors.top: name.bottom
             }
         }
+        // xtend:filesearch
 
         Item {
             id: secondaryButton
@@ -112,5 +117,6 @@ Item {
                 fontStyle: Tokens.font.icon.builders.large.scale(1.3).build()
             }
         }
+        // xtend:filesearch end
     }
 }

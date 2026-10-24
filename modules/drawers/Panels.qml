@@ -12,8 +12,8 @@ import qs.modules.sidebar as Sidebar
 import qs.modules.utilities as Utilities
 import qs.modules.bar.popouts as BarPopouts
 import qs.modules.utilities.toasts as Toasts
-import qs.modules.hotspotqr as HotspotQr
-import qs.modules.cheatsheet as Cheatsheet
+import qs.modules.cheatsheet as Cheatsheet // xtend:cheatsheet
+import qs.modules.hotspotqr as HotspotQr // xtend:hotspot
 
 Item {
     id: root
@@ -35,8 +35,8 @@ Item {
     readonly property alias utilities: utilities
     readonly property alias toasts: toasts
     readonly property alias sidebar: sidebar
-    readonly property alias hotspotQr: hotspotQr
-    readonly property alias cheatsheet: cheatsheet
+    readonly property alias cheatsheet: cheatsheet // xtend:cheatsheet
+    readonly property alias hotspotQr: hotspotQr // xtend:hotspot
 
     anchors.fill: parent
     anchors.margins: borderThickness
@@ -138,6 +138,7 @@ Item {
         anchors.right: parent.right
     }
 
+    // xtend:hotspot
     HotspotQr.Wrapper {
         id: hotspotQr
 
@@ -147,7 +148,8 @@ Item {
 
         z: 100
     }
-
+    // xtend:hotspot end
+    // xtend:cheatsheet
     Cheatsheet.Wrapper {
         id: cheatsheet
 
@@ -155,7 +157,7 @@ Item {
 
         anchors.centerIn: parent
     }
-
+    // xtend:cheatsheet end
     Toasts.Toasts {
         id: toasts
 

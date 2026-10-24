@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Services.Pam
+import Quickshell.Services.Pam // xtend:hotspot
 import Caelestia.Config
 import Caelestia.I18n
 import qs.components
@@ -20,6 +20,7 @@ ColumnLayout {
     property string view: "wireless" // "wireless" or "ethernet"
     property var passwordNetwork: null
     property bool showPasswordDialog: false
+    // xtend:hotspot
 
     // "" | "auth" | "edit" - editing the hotspot password is gated behind
     // re-entering your own login password via the same PAM service the lock
@@ -29,6 +30,7 @@ ColumnLayout {
     property bool hotspotPasswordFailed: false
 
     Component.onCompleted: Hotspot.refreshStatus(() => {})
+    // xtend:hotspot end
 
     spacing: Tokens.spacing.small
     width: Tokens.sizes.bar.networkWidth
@@ -351,6 +353,7 @@ ColumnLayout {
         }
     }
 
+    // xtend:hotspot
     // Hotspot section - a plain interactive toggle over the same
     // assets/hotspot-toggle.sh script the keybind already runs, so both
     // stay in sync and drive identical create_ap logic. Shown regardless of
@@ -731,7 +734,7 @@ ColumnLayout {
             }
         }
     }
-
+    // xtend:hotspot end
     Connections {
         function onActiveChanged(): void {
             if (Nmcli.active && root.connectingToSsid === Nmcli.active.ssid) {

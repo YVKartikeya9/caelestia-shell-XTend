@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Caelestia.Config
-import Caelestia.I18n
+import Caelestia.I18n // xtend:filesearch
 import qs.components
 import qs.components.containers
 import qs.components.controls
@@ -28,11 +28,14 @@ StyledListView {
     }
 
     function stateForText(text: string): string {
+        // xtend:google
         if (text.startsWith("?"))
             return "google";
+        // xtend:google end
+        // xtend:filesearch
         if (text.startsWith("<"))
             return "find";
-
+        // xtend:filesearch end
         const prefix = GlobalConfig.launcher.actionPrefix;
         if (text.startsWith(prefix)) {
             for (const action of ["calc", "scheme", "variant"])
@@ -55,13 +58,17 @@ StyledListView {
             return Schemes.query(text);
         case "variant":
             return M3Variants.query(text);
-        case "google":
-            return [0]; // single delegate; GoogleItem reads the query itself
+        // xtend:filesearch
         case "find":
             Files.search(text.slice(1));
             if (Files.searching && Files.results.length === 0)
                 return [{ icon: "search", name: Tr.tr("Searching…"), desc: "", onClicked: () => {} }];
             return Files.results;
+        // xtend:filesearch end
+        // xtend:google
+        case "google":
+            return [0]; // single delegate; GoogleItem reads the query itself
+        // xtend:google end
         default:
             return Apps.search(text);
         }
@@ -69,7 +76,7 @@ StyledListView {
 
     model: ScriptModel {
         values: {
-            void Files.results; // re-evaluate as async file search results arrive
+            void Files.results; // xtend:filesearch - re-evaluate as async results arrive
             return root.resultsForText(root.displayText);
         }
         onValuesChanged: root.currentIndex = 0
@@ -77,7 +84,7 @@ StyledListView {
 
     spacing: Tokens.spacing.small
     orientation: Qt.Vertical
-    // GoogleItem grows to fit its preview, so size from the current item
+    // xtend:google - GoogleItem grows to fit its preview, so size from the current item
     implicitHeight: ((currentItem?.implicitHeight ?? Tokens.sizes.launcher.itemHeight) + spacing) * Math.min(Config.launcher.maxShown, count) - spacing
 
     preferredHighlightBegin: 0
@@ -104,8 +111,10 @@ StyledListView {
     onStateChanged: {
         if (state === "scheme" || state === "variant")
             Schemes.reload();
+        // xtend:filesearch
         if (state !== "find")
             Files.reset();
+        // xtend:filesearch end
     }
 
     Component.onCompleted: displayText = search.text
@@ -146,20 +155,22 @@ StyledListView {
                 root.delegate: variantItem
             }
         },
+        /* xtend:google */
         State {
             name: "google"
 
             PropertyChanges {
                 root.delegate: googleItem
             }
-        },
+        } /* xtend:google end */,
+        /* xtend:filesearch */
         State {
             name: "find"
 
             PropertyChanges {
                 root.delegate: findItem
             }
-        }
+        } /* xtend:filesearch end */
     ]
 
     transitions: Transition {
@@ -320,14 +331,7 @@ StyledListView {
         }
     }
 
-    Component {
-        id: googleItem
-
-        GoogleItem {
-            list: root
-        }
-    }
-
+    // xtend:filesearch
     Component {
         id: findItem
 
@@ -335,7 +339,16 @@ StyledListView {
             list: root
         }
     }
+    // xtend:filesearch end
+    // xtend:google
+    Component {
+        id: googleItem
 
+        GoogleItem {
+            list: root
+        }
+    }
+    // xtend:google end
     Connections {
         function onTextChanged() {
             root.syncDisplayText();

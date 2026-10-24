@@ -11,8 +11,8 @@ PersistentProperties {
     property bool dashboard
     property bool utilities
     property bool sidebar
-    property bool hotspotQr
-    property bool cheatsheet
+    property bool cheatsheet // xtend:cheatsheet
+    property bool hotspotQr // xtend:hotspot
 
     // Dashboard state
     property int dashboardTab

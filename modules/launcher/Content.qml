@@ -59,7 +59,13 @@ Item {
         topPadding: Math.round((Tokens.padding.medium + Tokens.padding.large) / 2)
         bottomPadding: Math.round((Tokens.padding.medium + Tokens.padding.large) / 2)
 
-        placeholderText: Tr.tr("Type \"%1\" for commands, \"?\" to search, \"<\" to find files").arg(GlobalConfig.launcher.actionPrefix)
+        placeholderText: {
+            const hints = [Tr.tr("Type \"%1\" for commands").arg(GlobalConfig.launcher.actionPrefix)];
+            // xtend:launcher-hints
+            hints.push(Tr.tr("\"?\" to search")); // xtend:google
+            hints.push(Tr.tr("\"<\" to find files")); // xtend:filesearch
+            return hints.join(", ");
+        }
 
         onAccepted: {
             const currentItem = list.currentList?.currentItem;
@@ -69,10 +75,14 @@ Item {
                         Wallpapers.previewColourLock = true;
                     Wallpapers.setWallpaper(currentItem.modelData.path);
                     root.screenState.launcher = false;
-                } else if (text.startsWith("?")) {
-                    currentItem.onClicked();
+                // xtend:filesearch
                 } else if (text.startsWith("<")) {
                     currentItem.modelData.onClicked(list.currentList);
+                // xtend:filesearch end
+                // xtend:google
+                } else if (text.startsWith("?")) {
+                    currentItem.onClicked();
+                // xtend:google end
                 } else if (text.startsWith(GlobalConfig.launcher.actionPrefix)) {
                     if (text.startsWith(`${GlobalConfig.launcher.actionPrefix}calc `))
                         currentItem.onClicked();
