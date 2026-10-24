@@ -1,0 +1,318 @@
+{
+  "about": "Keybind descriptions for caelestia's upstream hypr/hyprland/keybinds.lua (caelestia-dots/caelestia @ c034621), used by describe-keybinds.py",
+  "matching": "'action' matches a bind's action argument exactly (whitespace-normalised); 'function' matches an inline-function action containing that call",
+  "binds": [
+    {
+      "action": "hl.dsp.global(\"caelestia:launcher\")",
+      "description": "Launcher: Open launcher"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:session\")",
+      "description": "Launcher: Open session menu"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:sidebar\")",
+      "description": "Launcher: Toggle sidebar"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:clearNotifs\")",
+      "description": "Launcher: Clear notifications"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:showall\")",
+      "description": "Launcher: Show all panels"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:lock\")",
+      "description": "Launcher: Lock session"
+    },
+    {
+      "function": "hl.dsp.exec_cmd(\"caelestia shell -d\")",
+      "description": "Launcher: Restore shell + lock"
+    },
+    {
+      "action": "fn.wsaction(\"focus\", \"\", i)",
+      "description": "Workspaces: Go to workspace"
+    },
+    {
+      "action": "fn.wsaction(\"move\", \"\", i)",
+      "description": "Workspaces: Move window to workspace"
+    },
+    {
+      "action": "fn.wsaction(\"focus\", \"group\", i)",
+      "description": "Workspaces: Go to workspace group"
+    },
+    {
+      "action": "fn.wsaction(\"move\", \"group\", i)",
+      "description": "Workspaces: Move window to workspace group"
+    },
+    {
+      "action": "hl.dsp.focus({ workspace = \"-1\" })",
+      "description": "Workspaces: Prev/next workspace"
+    },
+    {
+      "action": "hl.dsp.focus({ workspace = \"+1\" })",
+      "description": "Workspaces: Prev/next workspace"
+    },
+    {
+      "action": "hl.dsp.focus({ workspace = \"-10\" })",
+      "description": "Workspaces: Prev/next workspace group"
+    },
+    {
+      "action": "hl.dsp.focus({ workspace = \"+10\" })",
+      "description": "Workspaces: Prev/next workspace group"
+    },
+    {
+      "action": "hl.dsp.window.move({ workspace = \"+1\" })",
+      "description": "Window Focus: Move window +/- workspace"
+    },
+    {
+      "action": "hl.dsp.window.move({ workspace = \"-1\" })",
+      "description": "Window Focus: Move window +/- workspace"
+    },
+    {
+      "action": "hl.dsp.window.move({ workspace = \"special:special\" })",
+      "description": "Special Workspaces: Move window to special workspace"
+    },
+    {
+      "action": "hl.dsp.window.move({ workspace = \"e+0\" })",
+      "description": "Special Workspaces: Move window from special workspace"
+    },
+    {
+      "action": "hl.dsp.window.cycle_next()",
+      "description": "Window Groups: Cycle next in group"
+    },
+    {
+      "action": "hl.dsp.window.cycle_next({ next = false })",
+      "description": "Window Groups: Cycle prev in group"
+    },
+    {
+      "action": "hl.dsp.group.next()",
+      "description": "Window Groups: Next group"
+    },
+    {
+      "action": "hl.dsp.group.prev()",
+      "description": "Window Groups: Prev group"
+    },
+    {
+      "action": "hl.dsp.group.toggle()",
+      "description": "Window Groups: Toggle group"
+    },
+    {
+      "action": "hl.dsp.window.move({ out_of_group = true })",
+      "description": "Window Groups: Remove window from group"
+    },
+    {
+      "action": "hl.dsp.group.lock_active()",
+      "description": "Window Groups: Lock active group"
+    },
+    {
+      "action": "hl.dsp.focus({ direction = dir })",
+      "description": "Window Focus: Focus direction"
+    },
+    {
+      "action": "hl.dsp.window.move({ direction = dir })",
+      "description": "Window Focus: Move window direction"
+    },
+    {
+      "action": "fn.resize_active_window(-10, 0)",
+      "description": "Window Resize: Resize width"
+    },
+    {
+      "action": "fn.resize_active_window(10, 0)",
+      "description": "Window Resize: Resize width"
+    },
+    {
+      "action": "fn.resize_active_window(0, -10)",
+      "description": "Window Resize: Resize height"
+    },
+    {
+      "action": "fn.resize_active_window(0, 10)",
+      "description": "Window Resize: Resize height"
+    },
+    {
+      "action": "hl.dsp.window.drag()",
+      "description": "Window Resize: Drag window (mouse)"
+    },
+    {
+      "action": "hl.dsp.window.resize()",
+      "description": "Window Resize: Resize window (mouse)"
+    },
+    {
+      "action": "hl.dsp.window.center()",
+      "description": "Window Resize: Center window"
+    },
+    {
+      "function": "hl.dsp.window.resize(fn.resize_by_screen(55, 70))",
+      "description": "Window Resize: Resize 55x70 + center"
+    },
+    {
+      "function": "hl.get_active_window()",
+      "description": "Window Actions: Toggle picture-in-picture"
+    },
+    {
+      "action": "hl.dsp.window.pin()",
+      "description": "Window Actions: Pin window"
+    },
+    {
+      "action": "hl.dsp.window.fullscreen({ mode = \"fullscreen\" })",
+      "description": "Window Actions: Fullscreen"
+    },
+    {
+      "action": "hl.dsp.window.fullscreen({ mode = \"maximized\" })",
+      "description": "Window Actions: Maximize (bordered fullscreen)"
+    },
+    {
+      "action": "hl.dsp.window.float()",
+      "description": "Window Actions: Toggle floating"
+    },
+    {
+      "action": "hl.dsp.window.close()",
+      "description": "Window Actions: Close window"
+    },
+    {
+      "action": "fn.toggle(\"specialws\")",
+      "description": "Special Workspaces: Toggle special workspace"
+    },
+    {
+      "action": "fn.toggle(\"sysmon\")",
+      "description": "Special Workspaces: Toggle sysmon workspace"
+    },
+    {
+      "action": "fn.toggle(\"music\")",
+      "description": "Special Workspaces: Toggle music workspace"
+    },
+    {
+      "action": "fn.toggle(\"communication\")",
+      "description": "Special Workspaces: Toggle communication workspace"
+    },
+    {
+      "action": "fn.toggle(\"todo\")",
+      "description": "Special Workspaces: Toggle todo workspace"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(vars.terminal)",
+      "description": "Apps: Open Terminal"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(vars.browser)",
+      "description": "Apps: Open Browser"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(vars.editor)",
+      "description": "Apps: Open Editor"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(vars.fileExplorer)",
+      "description": "Apps: Open File Explorer"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(vars.audioSettings)",
+      "description": "Apps: Audio settings (pavucontrol)"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(\"caelestia screenshot\")",
+      "description": "Utilities: Screenshot"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:screenshotFreeze\")",
+      "description": "Utilities: Screenshot (freeze)"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:screenshot\")",
+      "description": "Utilities: Screenshot"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(\"caelestia record\")",
+      "description": "Utilities: Record"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(\"caelestia record -s\")",
+      "description": "Utilities: Record (selection)"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(\"caelestia record -r\")",
+      "description": "Utilities: Record (region)"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(\"hyprpicker -a\")",
+      "description": "Utilities: Color picker (hyprpicker)"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:brightnessUp\")",
+      "description": "Media: Brightness +"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:brightnessDown\")",
+      "description": "Media: Brightness -"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:mediaToggle\")",
+      "description": "Media: Play/pause"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:mediaNext\")",
+      "description": "Media: Next track"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:mediaPrev\")",
+      "description": "Media: Previous track"
+    },
+    {
+      "action": "hl.dsp.global(\"caelestia:mediaStop\")",
+      "description": "Media: Stop media"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(\"wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle\")",
+      "description": "Media: Mute output"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(\"wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle\")",
+      "description": "Media: Mute mic"
+    },
+    {
+      "action": "hl.dsp.exec_cmd( \"wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume -l \" .. (vars.volumeMax / 100) .. \" @DEFAULT_AUDIO_SINK@ \" .. vars.volumeStep .. \"%+\" )",
+      "description": "Media: Volume +"
+    },
+    {
+      "action": "hl.dsp.exec_cmd( \"wpctl set-mute @DEFAULT_AUDIO_SINK@ 0; wpctl set-volume @DEFAULT_AUDIO_SINK@ \" .. vars.volumeStep .. \"%-\" )",
+      "description": "Media: Volume -"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(vars.sleepGestureCmd)",
+      "description": "Sleep: Sleep gesture"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(\"pkill fuzzel || caelestia emoji -p\")",
+      "description": "Utilities: Emoji picker"
+    },
+    {
+      "action": "hl.dsp.exec_cmd('sleep 0.5s && ydotool type -d 1 \"$(cliphist list | head -1 | cliphist decode)\"')",
+      "description": "Utilities: Type last clipboard entry"
+    },
+    {
+      "action": "hl.dsp.exec_cmd( \"notify-send -u low -i dialog-information-symbolic 'Test notification' \" .. [[\"Here's a really long message to test truncation and wrapping\\nYou can middle click or flick this notification to dismiss it!\"]] .. \" -a 'Shell' -A 'Test1=I got it!' -A 'Test2=Another action'\" )",
+      "description": "Utilities: Test notification"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(\"qs -c caelestia kill\")",
+      "description": "Launcher: Kill shell"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(\"qs -c caelestia kill; sleep .1; caelestia shell -d\")",
+      "description": "Launcher: Kill, wait, restart shell"
+    },
+    {
+      "action": "fn.wsaction(\"move_silent\", \"\", i)",
+      "description": "Workspaces: Move window silently to workspace"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(\"pkill fuzzel || caelestia clipboard\")",
+      "description": "Utilities: Clipboard history"
+    },
+    {
+      "action": "hl.dsp.exec_cmd(\"pkill fuzzel || caelestia clipboard -d\")",
+      "description": "Utilities: Delete clipboard entry"
+    }
+  ]
+}
