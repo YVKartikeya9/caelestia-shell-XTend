@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Caelestia.Config
+import Caelestia.I18n
 import qs.components
 import qs.components.containers
 import qs.components.controls
@@ -27,6 +28,9 @@ StyledListView {
     }
 
     function stateForText(text: string): string {
+        if (text.startsWith("<"))
+            return "find";
+
         const prefix = GlobalConfig.launcher.actionPrefix;
         if (text.startsWith(prefix)) {
             for (const action of ["calc", "scheme", "variant"])
@@ -49,13 +53,21 @@ StyledListView {
             return Schemes.query(text);
         case "variant":
             return M3Variants.query(text);
+        case "find":
+            Files.search(text.slice(1));
+            if (Files.searching && Files.results.length === 0)
+                return [{ icon: "search", name: Tr.tr("Searching…"), desc: "", onClicked: () => {} }];
+            return Files.results;
         default:
             return Apps.search(text);
         }
     }
 
     model: ScriptModel {
-        values: root.resultsForText(root.displayText)
+        values: {
+            void Files.results; // re-evaluate as async file search results arrive
+            return root.resultsForText(root.displayText);
+        }
         onValuesChanged: root.currentIndex = 0
     }
 
@@ -125,6 +137,13 @@ StyledListView {
 
             PropertyChanges {
                 root.delegate: variantItem
+            }
+        },
+        State {
+            name: "find"
+
+            PropertyChanges {
+                root.delegate: findItem
             }
         }
     ]
@@ -283,6 +302,14 @@ StyledListView {
         id: variantItem
 
         VariantItem {
+            list: root
+        }
+    }
+
+    Component {
+        id: findItem
+
+        ActionItem {
             list: root
         }
     }
