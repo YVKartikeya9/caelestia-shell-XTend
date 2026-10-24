@@ -24,6 +24,17 @@ Singleton {
         Qt.callLater(() => root.applyQuery(query));
     }
 
+    // Called when the launcher leaves file-search mode, so typing (or pasting)
+    // the same query again runs a fresh search instead of reusing a stale or
+    // failed one. Searches still in flight are dropped by the lastQuery checks.
+    function reset(): void {
+        if (root.lastQuery.length === 0 && !root.searching)
+            return;
+        root.lastQuery = "";
+        root.searching = false;
+        root.results = [];
+    }
+
     function applyQuery(query: string): void {
         if (query === root.lastQuery)
             return;

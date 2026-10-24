@@ -104,6 +104,8 @@ StyledListView {
     onStateChanged: {
         if (state === "scheme" || state === "variant")
             Schemes.reload();
+        if (state !== "find")
+            Files.reset();
     }
 
     Component.onCompleted: displayText = search.text
