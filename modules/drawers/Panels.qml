@@ -13,6 +13,7 @@ import qs.modules.utilities as Utilities
 import qs.modules.bar.popouts as BarPopouts
 import qs.modules.utilities.toasts as Toasts
 import qs.modules.hotspotqr as HotspotQr
+import qs.modules.cheatsheet as Cheatsheet
 
 Item {
     id: root
@@ -35,6 +36,7 @@ Item {
     readonly property alias toasts: toasts
     readonly property alias sidebar: sidebar
     readonly property alias hotspotQr: hotspotQr
+    readonly property alias cheatsheet: cheatsheet
 
     anchors.fill: parent
     anchors.margins: borderThickness
@@ -144,6 +146,14 @@ Item {
         anchors.centerIn: parent
 
         z: 100
+    }
+
+    Cheatsheet.Wrapper {
+        id: cheatsheet
+
+        screenState: root.screenState
+
+        anchors.centerIn: parent
     }
 
     Toasts.Toasts {

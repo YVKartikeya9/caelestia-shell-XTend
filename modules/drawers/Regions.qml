@@ -78,6 +78,12 @@ Region {
         height: panel.height * (1 - root.panels.hotspotQr.offsetScale)
     }
 
+    R {
+        panel: root.panels.cheatsheet
+        width: panel.width * (1 - root.panels.cheatsheet.offsetScale)
+        height: panel.height * (1 - root.panels.cheatsheet.offsetScale)
+    }
+
     component R: Region {
         required property Item panel
 
