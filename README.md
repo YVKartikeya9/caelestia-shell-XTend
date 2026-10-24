@@ -33,8 +33,8 @@ have, and can take them out again. The original caelestia README is in
 ## Install
 
 ```sh
-git clone https://github.com/<your-account>/caelestia-XTend
-cd caelestia-XTend
+git clone https://github.com/YVKartikeya9/caelestia-shell-XTend
+cd caelestia-shell-XTend
 ./install.py
 ```
 
