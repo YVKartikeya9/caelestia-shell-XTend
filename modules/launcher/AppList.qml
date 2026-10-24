@@ -28,6 +28,8 @@ StyledListView {
     }
 
     function stateForText(text: string): string {
+        if (text.startsWith("?"))
+            return "google";
         if (text.startsWith("<"))
             return "find";
 
@@ -53,6 +55,8 @@ StyledListView {
             return Schemes.query(text);
         case "variant":
             return M3Variants.query(text);
+        case "google":
+            return [0]; // single delegate; GoogleItem reads the query itself
         case "find":
             Files.search(text.slice(1));
             if (Files.searching && Files.results.length === 0)
@@ -73,7 +77,8 @@ StyledListView {
 
     spacing: Tokens.spacing.small
     orientation: Qt.Vertical
-    implicitHeight: (Tokens.sizes.launcher.itemHeight + spacing) * Math.min(Config.launcher.maxShown, count) - spacing
+    // GoogleItem grows to fit its preview, so size from the current item
+    implicitHeight: ((currentItem?.implicitHeight ?? Tokens.sizes.launcher.itemHeight) + spacing) * Math.min(Config.launcher.maxShown, count) - spacing
 
     preferredHighlightBegin: 0
     preferredHighlightEnd: height
@@ -137,6 +142,13 @@ StyledListView {
 
             PropertyChanges {
                 root.delegate: variantItem
+            }
+        },
+        State {
+            name: "google"
+
+            PropertyChanges {
+                root.delegate: googleItem
             }
         },
         State {
@@ -302,6 +314,14 @@ StyledListView {
         id: variantItem
 
         VariantItem {
+            list: root
+        }
+    }
+
+    Component {
+        id: googleItem
+
+        GoogleItem {
             list: root
         }
     }
