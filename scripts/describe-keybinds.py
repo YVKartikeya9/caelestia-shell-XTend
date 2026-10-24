@@ -263,7 +263,9 @@ def main():
         print("  --check: no changes written")
         return
 
-    with tempfile.NamedTemporaryFile("w", suffix=".lua", delete=False) as tmp:
+    # Same directory as the target, so the final rename never crosses
+    # filesystems (/tmp is often a separate tmpfs)
+    with tempfile.NamedTemporaryFile("w", dir=target.parent, prefix=".keybinds.", suffix=".lua.tmp", delete=False) as tmp:
         tmp.write(new)
     ok, err = lua_syntax_ok(Path(tmp.name))
     if ok is False:
