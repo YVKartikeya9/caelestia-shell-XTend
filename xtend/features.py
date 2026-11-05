@@ -240,9 +240,24 @@ FEATURES = [
         if (!query)
             return root.escapeHtml(text);
 
-        const idx = text.toLowerCase().indexOf(query.toLowerCase());
-        if (idx === -1)
-            return root.escapeHtml(text);
+        const lower = text.toLowerCase();
+        const q = query.toLowerCase();
+        const idx = lower.indexOf(q);
+        if (idx === -1) {
+            // Fuzzy (in-order) match: bold each matched character
+            let out = "";
+            let qi = 0;
+            for (let i = 0; i < text.length; i++) {
+                const ch = root.escapeHtml(text[i]);
+                if (qi < q.length && lower[i] === q[qi]) {
+                    out += `<b>${ch}</b>`;
+                    qi++;
+                } else {
+                    out += ch;
+                }
+            }
+            return qi === q.length ? out : root.escapeHtml(text);
+        }
 
         const pre = root.escapeHtml(text.slice(0, idx));
         const match = root.escapeHtml(text.slice(idx, idx + query.length));

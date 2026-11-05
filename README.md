@@ -12,7 +12,7 @@ have, and can take them out again. The original caelestia README is in
 | Feature | What it does | How to use it |
 |---|---|---|
 | **Keybind cheatsheet** | Searchable list of your Hyprland keybinds, grouped by category | `Super + /` |
-| **Launcher file search** | Find files and folders in your home folder, open them or their folder | Type `<` in the launcher |
+| **Launcher file search** | Find files and folders in your home folder (fuzzy: `mypres` finds `my_presentation.pptx`), open them or their folder | Type `<` in the launcher |
 | **Google search + Exa preview** | Search Google from the launcher; optional AI answer preview | Type `?` in the launcher |
 | **Wi-Fi hotspot + QR code** *(experimental)* | Hotspot toggle, connected devices and a QR code to join, in the network popout | Bar → network icon |
 
@@ -102,8 +102,12 @@ set, what you type after `?` is sent to `api.exa.ai`.
 
 ### File search
 
-Results come from `plocate`'s index (updated daily) with an `fd` fallback for newer files, and
-are limited to your home folder.
+Results come from `plocate`'s index (updated daily) plus a live `fd` search, limited to your home
+folder. Matching is fuzzy but in order: the letters you type must appear in the name in the same
+order, with anything in between, so `report2026` finds `report_2026_final.pdf` but `hi_hello`
+doesn't find `hello_hi.txt`. Exact and substring matches rank first. Caches, dependency folders
+(`.cache`, `node_modules`, `__pycache__`, `.venv`, `venv`, `site-packages`, `.git`) and app data
+(Trash, Steam, `~/.vscode`, Brave's profile) are left out.
 
 ## Fresh caelestia installs: known problems
 

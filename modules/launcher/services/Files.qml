@@ -72,8 +72,31 @@ Singleton {
         return "draft";
     }
 
-    // Simple relevance score: exact match, then prefix match, then a match
-    // right after a path/word boundary, then any other substring match
+    // Regex for an in-order fuzzy match: every query character, in the same
+    // order, with anything in between (mypres -> m.*?y.*?p.*?r.*?e.*?s).
+    // Characters are escaped so ( [ + etc. are matched literally.
+    function fuzzyPattern(query: string): string {
+        return Array.from(query).map(c => c.replace(/[\\.+*?()|[\]{}^$#&\-~]/g, "\\$&")).join(".*?");
+    }
+
+    // Two-pointer scan: positions of the query's characters in name, in order,
+    // or null if they don't all appear in that order
+    function fuzzyIndices(name: string, query: string): var {
+        const idx = [];
+        let qi = 0;
+        for (let i = 0; i < name.length && qi < query.length; i++) {
+            if (name[i] === query[qi]) {
+                idx.push(i);
+                qi++;
+            }
+        }
+        return qi === query.length ? idx : null;
+    }
+
+    // Relevance score: exact match, then prefix match, then a match right
+    // after a path/word boundary, then any other substring match, then an
+    // in-order fuzzy match (tighter matches, with fewer skipped characters,
+    // first)
     function fuzzyScore(name: string, query: string): int {
         if (name === query)
             return 1000;
@@ -86,13 +109,24 @@ Singleton {
             return (boundary ? 500 : 300) - idx;
         }
 
+        const pos = root.fuzzyIndices(name, query);
+        if (pos) {
+            const skipped = pos[pos.length - 1] - pos[0] + 1 - query.length;
+            return Math.max(1, 200 - skipped * 5 - pos[0]);
+        }
+
         return 0;
     }
 
-    // Generated/cache junk (colour scheme caches, git internals, dependency
-    // trees, ...) tends to share generic names and drown out real matches
+    // Caches, dependency folders and app data share generic names and drown
+    // out real matches, so they're left out of the results entirely
     function isNoisy(path: string): bool {
-        return /\/\.cache\/|\/\.git\/|\/node_modules\/|\/\.local\/share\/Trash\//.test(path);
+        // Folders with these names, anywhere (and everything inside them)
+        if (/\/(\.cache|\.git|node_modules|__pycache__|\.venv|venv|site-packages)(\/|$)/.test(path))
+            return true;
+        // App data under home: trash, Steam, VS Code extensions, Brave profile
+        const rel = path.slice(Paths.home.length);
+        return /^\/(\.local\/share\/Trash|\.local\/share\/Steam|\.vscode|\.config\/BraveSoftware)(\/|$)/.test(rel);
     }
 
     // Collapse long paths at directory boundaries (~/a/.../y/z) rather than
@@ -135,26 +169,19 @@ Singleton {
         // Keep results scoped to the user's own files
         const scoped = paths.filter(p => p === Paths.home || p.startsWith(`${Paths.home}/`));
 
-        if (scoped.length === 0) {
-            root.searching = false;
-            root.results = [];
-            liveFallback.run(query);
-            return;
-        }
-
-        statProc.run(query, scoped);
+        // Always follow up with a live fuzzy search, which also covers files
+        // newer than plocate's index; both result sets are merged and ranked
+        liveSearch.run(query, scoped);
     }
 
     function rank(query: string, paths: var, typeLines: var): void {
         const q = query.toLowerCase();
 
-        const scored = paths.map((rawPath, i) => {
-            // fd prints folders with a trailing slash, which would leave the name empty
-            const path = rawPath.length > 1 ? rawPath.replace(/\/+$/, "") : rawPath;
+        const scored = paths.map((path, i) => {
             const parts = path.split("/");
             const name = parts[parts.length - 1] || path;
             const isDir = (typeLines[i] ?? "").startsWith("directory");
-            const score = root.fuzzyScore(name.toLowerCase(), q) - (root.isNoisy(path) ? 10000 : 0);
+            const score = root.fuzzyScore(name.toLowerCase(), q);
             return { name, path, isDir, score, depth: parts.length };
         });
 
@@ -221,39 +248,57 @@ Singleton {
         }
     }
 
-    // plocate's index can lag behind the real filesystem (it only updates via
-    // updatedb); if it comes up empty, fall back to a live, home-scoped search
+    // Live, home-scoped fuzzy search with fd (plocate can only match
+    // substrings quickly, and its index lags behind the real filesystem).
+    // Its results are merged with plocate's, without duplicates.
     Process {
-        id: liveFallback
+        id: liveSearch
         property var lines: []
+        property var indexed: []
         property string runningQuery: ""
 
-        function run(q: string): void {
-            liveFallback.runningQuery = q;
-            liveFallback.lines = [];
-            liveFallback.command = ["fd", "--max-results", "200", "-i", "--", q, Paths.home];
-            liveFallback.running = true;
+        function run(q: string, indexedPaths: var): void {
+            liveSearch.runningQuery = q;
+            liveSearch.indexed = indexedPaths;
+            liveSearch.lines = [];
+            // fd already skips hidden folders (.cache, .vscode, ...); skip the
+            // other clutter folders too, so they don't use up the 200 results
+            liveSearch.command = ["fd", "--max-results", "200", "-i", "--exclude", "node_modules", "--exclude", "__pycache__", "--exclude", "venv", "--exclude", "site-packages", "--", root.fuzzyPattern(q), Paths.home];
+            liveSearch.running = true;
         }
 
         stdout: SplitParser {
             onRead: data => {
                 if (!data)
                     return;
-                liveFallback.lines.push(data);
+                liveSearch.lines.push(data);
             }
         }
 
         onRunningChanged: {
-            if (liveFallback.running || liveFallback.runningQuery !== root.lastQuery)
+            if (liveSearch.running || liveSearch.runningQuery !== root.lastQuery)
                 return;
 
-            if (liveFallback.lines.length === 0) {
+            // fd prints folders with a trailing slash; drop it so the name
+            // isn't empty and the same folder from both searches is deduplicated
+            const seen = new Set();
+            const merged = [];
+            for (const raw of [...liveSearch.indexed, ...liveSearch.lines]) {
+                const p = raw.length > 1 ? raw.replace(/\/+$/, "") : raw;
+                // Caches, dependency folders and app data are just clutter
+                if (!seen.has(p) && !root.isNoisy(p)) {
+                    seen.add(p);
+                    merged.push(p);
+                }
+            }
+
+            if (merged.length === 0) {
                 root.searching = false;
                 root.results = [];
                 return;
             }
 
-            statProc.run(liveFallback.runningQuery, liveFallback.lines);
+            statProc.run(liveSearch.runningQuery, merged);
         }
     }
 
