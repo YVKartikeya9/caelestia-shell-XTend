@@ -107,6 +107,10 @@
       "description": "Window Groups: Lock active group"
     },
     {
+      "action": "hl.dsp.group.lock()",
+      "description": "Window Groups: Lock active group"
+    },
+    {
       "action": "hl.dsp.focus({ direction = dir })",
       "description": "Window Focus: Focus direction"
     },

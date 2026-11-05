@@ -62,7 +62,8 @@ Nothing happens before you confirm, and everything is undone by `--uninstall`.
   `caelestia-shell` update, run `./install.py --update` so the copy picks up the new version.
 - **Backups.** The shell is backed up to `~/.local/state/caelestia/xtend-backups/` before
   every change. If the shell fails to load afterwards, the installer rolls back automatically.
-- **Packages.** `plocate` and `fd` (file search), `qrencode` and `create_ap` (hotspot), via
+- **Packages.** `plocate` and `fd` (file search), `qrencode`, `dnsmasq`, `iptables` and `create_ap`
+  (hotspot), via
   `pacman` and your AUR helper. The daily file index (`plocate-updatedb.timer`) is turned on.
   Building `create_ap` asks to import its author's PGP key; that's expected, answer yes.
 - **Settings.** Hotspot name/password and the Exa key go in `~/.config/caelestia/.env`, readable

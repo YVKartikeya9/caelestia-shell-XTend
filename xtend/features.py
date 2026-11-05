@@ -104,7 +104,8 @@ FEATURES = [
             "assets/hotspot-toggle.sh",
             "assets/hotspot-status.sh",
         ],
-        packages=["qrencode"],
+        # create_ap needs dnsmasq and iptables to share the connection
+        packages=["qrencode", "dnsmasq", "iptables"],
         aur=["create_ap"],
         default=False,
         notes=[

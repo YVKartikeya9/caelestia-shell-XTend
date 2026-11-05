@@ -107,8 +107,14 @@ def detect_hypr():
     """
     hypr = CONFIG / "hypr"
     kb = hypr / "hyprland/keybinds.lua"
-    if kb.exists() and "create_bind" in kb.read_text(errors="ignore"):
-        return "caelestia", kb, CONFIG / "caelestia/hypr-user.lua"
+
+    def has(path, text):
+        return path.exists() and text in path.read_text(errors="ignore")
+
+    # caelestia's hyprland.lua loads ~/.config/caelestia/hypr-user.lua; that
+    # line stays even when someone rewrites keybinds.lua without create_bind
+    if has(hypr / "hyprland.lua", 'require("hypr-user")') or has(kb, "create_bind"):
+        return "caelestia", kb if kb.exists() else hypr / "hyprland.lua", CONFIG / "caelestia/hypr-user.lua"
     if (hypr / "hyprland.lua").exists():
         return "lua", hypr / "hyprland.lua", hypr / "xtend.lua"
     if (hypr / "hyprland.conf").exists():
@@ -183,7 +189,12 @@ def drop_feature(f):
 # --- System setup -----------------------------------------------------------
 
 def missing_packages(pkgs):
-    return [p for p in pkgs if run(["pacman", "-Q", p]).returncode != 0]
+    # pacman -T prints the ones nothing installed satisfies, so a package that
+    # *provides* one counts as installed (iptables-nft provides iptables)
+    if not pkgs:
+        return []
+    unmet = set(run(["pacman", "-T", *pkgs]).stdout.split())
+    return [p for p in pkgs if p in unmet]
 
 
 def install_packages(repo, aur, dry):
