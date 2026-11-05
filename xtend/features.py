@@ -114,7 +114,8 @@ FEATURES = [
         ],
         ops=[
             Insert(STATE, A_STATE, "    property bool hotspotQr"),
-            Insert("modules/ServiceLoader.qml", "        Brightness;", "        Hotspot;"),
+            # Services load at startup from ServiceLoader.qml (2.5.0) or shell.qml (newer)
+            Insert(("modules/ServiceLoader.qml", "shell.qml"), "        Brightness;", "        Hotspot;"),
             Insert(PANELS, A_PANEL_IMPORTS, "import qs.modules.hotspotqr as HotspotQr"),
             Insert(PANELS, A_PANEL_ALIASES, "    readonly property alias hotspotQr: hotspotQr"),
             Insert(PANELS, A_PANEL_ITEMS, """    HotspotQr.Wrapper {
@@ -156,7 +157,8 @@ FEATURES = [
         ],
         ops=[
             Insert(STATE, A_STATE, "    property bool cheatsheet"),
-            Insert("modules/Shortcuts.qml", "    IpcHandler {\n        function toggle(drawer: string): void {", """    // qmllint disable unresolved-type
+            # modules/Shortcuts.qml (2.5.0) moved to daemons/Shortcuts.qml upstream
+            Insert(("modules/Shortcuts.qml", "daemons/Shortcuts.qml"), "    IpcHandler {\n        function toggle(drawer: string): void {", """    // qmllint disable unresolved-type
     CustomShortcut {
         // qmllint enable unresolved-type
         name: "cheatsheet"

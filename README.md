@@ -24,8 +24,9 @@ have, and can take them out again. The original caelestia README is in
 
 ## Requirements
 
-- **caelestia-shell 2.5.0** (the AUR package). Other versions may work: the installer checks
-  every change first and skips any feature that doesn't fit.
+- **caelestia-shell 2.5.0** (the AUR package) or **caelestia-shell-git** (upstream's latest code,
+  tested at 2.5.0.r56). Other versions may work: the installer checks every change first and
+  skips any feature that doesn't fit.
 - **Hyprland** with either caelestia's dotfiles or your own config (Lua or `hyprland.conf`).
 - **Python 3** (already there if you have `caelestia-cli`).
 - An AUR helper (`paru` or `yay`) for the hotspot's `create_ap`.

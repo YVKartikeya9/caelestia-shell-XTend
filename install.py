@@ -160,6 +160,10 @@ def ensure_user_shell(state, dry):
 def backup_shell():
     stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     dest = BACKUPS / stamp
+    n = 2
+    while dest.exists():  # --update backs up twice within a second
+        dest = BACKUPS / f"{stamp}-{n}"
+        n += 1
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copytree(USER_SHELL, dest, symlinks=True)
     ok(f"backed up the shell to {dest}")
@@ -559,7 +563,7 @@ def simulate(root, features):
     by then, not as they are now. Returns (installable, skipped-with-reasons).
     """
     import tempfile
-    files = {op.file for f in features for op in f.ops}
+    files = {p for f in features for op in f.ops for p in engine.candidates(op.file)}
     todo, skipped, bad = [], [], set()
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)

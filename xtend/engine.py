@@ -13,6 +13,18 @@ That's what lets any combination of features be installed in any order.
 from dataclasses import dataclass
 
 
+def candidates(file):
+    """An edit's file is one path, or a tuple of paths when upstream has moved
+    the file between versions (oldest location first)."""
+    return (file,) if isinstance(file, str) else tuple(file)
+
+
+def locate(root, file):
+    """The path an edit applies to under `root`: the first candidate that exists."""
+    paths = candidates(file)
+    return next((p for p in paths if (root / p).is_file()), paths[0])
+
+
 def _indent(text):
     for line in text.splitlines():
         if line.strip():
@@ -44,7 +56,7 @@ class Insert:
     between, prefixed by `prefix` (e.g. a list separator).
     """
 
-    file: str
+    file: "str | tuple"  # see candidates()
     anchor: str
     text: str
     where: str = "after"
@@ -85,7 +97,7 @@ class Replace:
     string unique to `new`, so the edit still counts as applied after that.
     """
 
-    file: str
+    file: "str | tuple"  # see candidates()
     old: str
     new: str
     marker: str = ""
@@ -110,24 +122,26 @@ def preflight(root, feature, ops):
     """Return a list of problems that would stop `feature`'s edits applying."""
     problems = []
     for op in ops:
-        path = root / op.file
+        rel = locate(root, op.file)
+        path = root / rel
         if not path.is_file():
-            problems.append(f"{op.file}: file not found")
+            problems.append(f"{' or '.join(candidates(op.file))}: file not found")
             continue
         if p := op.problem(path.read_text(), feature):
-            problems.append(f"{op.file}: {p}")
+            problems.append(f"{rel}: {p}")
     return problems
 
 
 def _rewrite(root, feature, ops, method):
     changed = set()
     for op in ops:
-        path = root / op.file
+        rel = locate(root, op.file)
+        path = root / rel
         src = path.read_text()
         new = getattr(op, method)(src, feature)
         if new != src:
             path.write_text(new)
-            changed.add(op.file)
+            changed.add(rel)
     return changed
 
 

@@ -2,6 +2,7 @@
 """Checks the installer's edits against a clean caelestia shell.
 
     python3 tests/test_edits.py [--base REF]   (default REF: v2.5.0)
+    python3 tests/test_edits.py --base origin/main   (upstream's latest code)
 
 The base tree is exported from this git repo, so run it from a clone. Checks:
 
@@ -11,7 +12,7 @@ The base tree is exported from this git repo, so run it from a clone. Checks:
 3. removing everything restores the base byte for byte
 4. removing one feature gives exactly what installing the others gives
 5. any install order, removed in a different order, ends at the base
-6. this branch's edited files equal "base + all features"
+6. this branch's edited files equal "base + all features" (only with v2.5.0)
 """
 
 import argparse
@@ -29,7 +30,7 @@ from xtend import engine  # noqa: E402
 from xtend.features import BY_NAME, FEATURES, resolve  # noqa: E402
 
 VISIBLE = [f.name for f in FEATURES if not f.hidden]
-EDITED = sorted({op.file for f in FEATURES for op in f.ops})
+EDITED = []  # the files the features edit in the base being tested; set in main()
 def find_qmlformat():
     # Must be Qt 6's: Qt 5's qmlformat rejects Qt 6 syntax like typed functions
     for p in ("/usr/lib/qt6/bin/qmlformat", "qmlformat6", "qmlformat"):
@@ -98,6 +99,8 @@ def main():
     base.mkdir()
     archive = subprocess.run(["git", "-C", str(REPO), "archive", args.base], capture_output=True, check=True)
     subprocess.run(["tar", "-x", "-C", str(base)], input=archive.stdout, check=True)
+    # Where each edit lands in this base (upstream has moved some files)
+    EDITED[:] = sorted({engine.locate(base, op.file) for f in FEATURES for op in f.ops})
 
     fails = []
 
@@ -149,12 +152,14 @@ def main():
         check(t.is_base() and not t.installed, f"install order {order} doesn't uninstall cleanly")
     print(f"install orders: {len(orders)}")
 
-    t = Tree(base, work)
-    for n in VISIBLE:
-        t.add(n)
-    stale = [p for p in EDITED if (REPO / p).read_text() != (t.work / p).read_text()]
-    check(not stale, f"branch files differ from base + all features: {stale} "
-                     "(regenerate them from the installer's output)")
+    # The branch itself is "v2.5.0 + every feature"; other bases only test the edits
+    if args.base == "v2.5.0":
+        t = Tree(base, work)
+        for n in VISIBLE:
+            t.add(n)
+        stale = [p for p in EDITED if (REPO / p).read_text() != (t.work / p).read_text()]
+        check(not stale, f"branch files differ from base + all features: {stale} "
+                         "(regenerate them from the installer's output)")
 
     shutil.rmtree(tmp)
     print(f"\n{'OK' if not fails else f'{len(fails)} FAILED'}")
