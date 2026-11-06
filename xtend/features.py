@@ -102,15 +102,14 @@ FEATURES = [
             "modules/hotspotqr/Content.qml",
             "modules/hotspotqr/Wrapper.qml",
             "assets/hotspot-toggle.sh",
-            "assets/hotspot-status.sh",
         ],
         # create_ap needs dnsmasq and iptables to share the connection
         packages=["qrencode", "dnsmasq", "iptables"],
         aur=["create_ap"],
         default=False,
         notes=[
-            "Starting a hotspot runs create_ap, ip and iw as root via sudo. XTend doesn't "
-            "set that up for you; see the README before turning the hotspot on.",
+            "The hotspot's root part runs through /usr/local/bin/caelestia-hotspot, the only "
+            "command allowed without a password (start/stop); see the README.",
         ],
         ops=[
             Insert(STATE, A_STATE, "    property bool hotspotQr"),

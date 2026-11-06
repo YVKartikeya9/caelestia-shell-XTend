@@ -1,0 +1,103 @@
+#!/bin/bash
+# caelestia-hotspot: the only thing caelestia's Wi-Fi hotspot runs as root.
+#
+#   sudo caelestia-hotspot start   reads the SSID and password from stdin,
+#                                  one per line, and starts create_ap
+#   sudo caelestia-hotspot stop    stops the hotspot and cleans up
+#
+# Installed root-owned in /usr/local/bin, so nothing running as the user can
+# change it; sudoers allows exactly these two commands without a password.
+# The password never appears on a command line (it would be visible in ps):
+# it goes into a root-only create_ap config file under /run.
+
+set -u
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/bin
+export LC_ALL=C
+
+RUN_DIR=/run/caelestia-hotspot
+CONF=$RUN_DIR/create_ap.conf
+LOG=$RUN_DIR/create_ap.log
+
+wifi_iface() {
+    ip -br link | awk '$1 ~ /^wl/ { sub(/@.*/, "", $1); print $1; exit }'
+}
+
+stop_hotspot() {
+    local wifi iface
+    wifi=$(wifi_iface)
+    [ -n "$wifi" ] && create_ap --stop "$wifi" >/dev/null 2>&1
+    # Only the hotspot's own processes, matched from the start of their
+    # command line: create_ap itself (bash running /usr/bin/create_ap), and
+    # its hostapd and dnsmasq (config files in /tmp/create_ap.*), not any
+    # other dnsmasq or anything that merely mentions create_ap
+    pkill -9 -f '^(/usr/bin/)?bash /usr/bin/create_ap( |$)' 2>/dev/null
+    pkill -9 -f '^(/usr/bin/)?hostapd .*/tmp/create_ap\.' 2>/dev/null
+    pkill -9 -f '^(/usr/bin/)?dnsmasq -C /tmp/create_ap\.' 2>/dev/null
+    for iface in $(ip -br link | awk '$1 ~ /^ap[0-9]+(@|$)/ { sub(/@.*/, "", $1); print $1 }'); do
+        iw dev "$iface" del 2>/dev/null || ip link delete "$iface" 2>/dev/null
+    done
+    rm -f /tmp/create_ap.*.pid "$CONF"
+}
+
+# create_ap's config reader uses `read` without -r, which eats backslashes
+# and trims surrounding spaces, so those are refused rather than mangled
+valid() { # value min max
+    local v=$1
+    [ "${#v}" -ge "$2" ] && [ "${#v}" -le "$3" ] || return 1
+    [[ $v == *\\* ]] && return 1
+    [[ $v =~ [[:cntrl:]] ]] && return 1
+    [[ $v == [[:space:]]* || $v == *[[:space:]] ]] && return 1
+    return 0
+}
+
+start_hotspot() {
+    local ssid pass wifi inet chan band
+    IFS= read -r ssid || ssid=""
+    IFS= read -r pass || pass=""
+    valid "$ssid" 1 32 || { echo "invalid SSID (1-32 characters, no backslashes or surrounding spaces)" >&2; exit 2; }
+    valid "$pass" 8 63 || { echo "invalid password (8-63 characters, no backslashes or surrounding spaces)" >&2; exit 2; }
+    [[ $pass =~ ^[[:print:]]+$ ]] || { echo "invalid password (printable ASCII only)" >&2; exit 2; }
+
+    wifi=$(wifi_iface)
+    [ -n "$wifi" ] || { echo "no wireless interface found" >&2; exit 3; }
+
+    stop_hotspot
+
+    inet=$(ip route | awk '/^default/ { print $5; exit }')
+    [ -n "$inet" ] || inet=$wifi
+
+    # Sharing the Wi-Fi connection itself: stay on its channel and band
+    chan="" band=""
+    if [ "$inet" = "$wifi" ]; then
+        chan=$(iw dev "$wifi" info 2>/dev/null | awk '/channel/ { print $2; exit }')
+        if [[ $chan =~ ^[0-9]+$ ]]; then
+            if [ "$chan" -gt 14 ]; then band=5; else band=2.4; fi
+        else
+            chan=""
+        fi
+    fi
+
+    mkdir -p "$RUN_DIR"
+    chmod 755 "$RUN_DIR"
+    (
+        umask 077
+        {
+            printf 'WIFI_IFACE=%s\n' "$wifi"
+            printf 'INTERNET_IFACE=%s\n' "$inet"
+            printf 'SSID=%s\n' "$ssid"
+            printf 'PASSPHRASE=%s\n' "$pass"
+            [ -n "$chan" ] && printf 'CHANNEL=%s\nFREQ_BAND=%s\n' "$chan" "$band"
+        } > "$CONF"
+    )
+
+    : > "$LOG"
+    chmod 644 "$LOG"
+    setsid create_ap --config "$CONF" >> "$LOG" 2>&1 < /dev/null &
+    echo "$inet"
+}
+
+case "${1:-}" in
+    start) start_hotspot ;;
+    stop) stop_hotspot ;;
+    *) echo "usage: caelestia-hotspot start|stop" >&2; exit 64 ;;
+esac

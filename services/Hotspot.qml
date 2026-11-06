@@ -9,8 +9,9 @@ import Caelestia.I18n
 // A thin wrapper around assets/hotspot-toggle.sh (bundled with the shell
 // config rather than living in ~/.local/bin, so the config has no external
 // script dependency) - it already handles interface/channel detection and
-// create_ap cleanup, and self-elevates via NOPASSWD sudo rules scoped to
-// create_ap/killall/ip/iw (no pkexec/polkit prompt needed). This singleton
+// create_ap cleanup; the root part goes through the root-owned helper
+// /usr/local/bin/caelestia-hotspot, whose start/stop are the only commands
+// allowed without a password (/etc/sudoers.d/caelestia-hotspot). This singleton
 // just gives the popout toggle and the Hyprland keybind (which points at
 // this same bundled script) a single source of truth: status is read via
 // an unprivileged `pgrep -x hostapd`, so it reflects reality regardless of

@@ -266,7 +266,11 @@ def setup_env(names, dry):
     new = text
     if "hotspot" in names:
         if not env_get(new, "HOTSPOT_SSID"):
-            ssid = "caelestia" if NOCONFIRM else (input("   Hotspot name (SSID) [caelestia]: ").strip() or "caelestia")
+            while True:
+                ssid = "caelestia" if NOCONFIRM else (input("   Hotspot name (SSID) [caelestia]: ").strip() or "caelestia")
+                if hotspot_value_ok(ssid, 1, 32):
+                    break
+                warn("1-32 characters, without backslashes")
             new = env_set(new, "HOTSPOT_SSID", ssid)
         if not env_get(new, "HOTSPOT_PASS"):
             if NOCONFIRM:
@@ -274,9 +278,9 @@ def setup_env(names, dry):
             else:
                 while True:
                     pw = getpass.getpass("   Hotspot password (8-63 characters, hidden): ")
-                    if 8 <= len(pw) <= 63:
+                    if hotspot_value_ok(pw, 8, 63) and pw.isascii() and pw.isprintable():
                         break
-                    warn("must be 8-63 characters")
+                    warn("must be 8-63 printable characters, without backslashes or spaces at either end")
                 new = env_set(new, "HOTSPOT_PASS", pw)
     if "google" in names and not env_get(new, "EXA_API_KEY") and not NOCONFIRM:
         key = getpass.getpass("   Exa API key for the AI preview (optional, Enter to skip, hidden): ").strip()
@@ -290,6 +294,120 @@ def setup_env(names, dry):
         fh.write(new)
     os.chmod(ENV_FILE, 0o600)
     ok(f"saved settings to {ENV_FILE} (readable only by you)")
+
+
+# --- Hotspot root access ----------------------------------------------------
+#
+# The hotspot needs root for create_ap. Instead of password-free sudo for
+# create_ap/ip/iw/killall (`sudo ip netns exec` alone is a root shell), a
+# root-owned helper does only "start" and "stop", and sudoers allows exactly
+# those two commands. See system/caelestia-hotspot.
+
+HELPER_SRC = REPO / "system/caelestia-hotspot"
+HELPER_DST = Path("/usr/local/bin/caelestia-hotspot")
+SUDOERS_DST = Path("/etc/sudoers.d/caelestia-hotspot")
+BROAD_TOOLS = ("/usr/bin/create_ap", "/usr/bin/ip", "/usr/bin/iw", "/usr/bin/killall")
+
+
+def hotspot_value_ok(v, lo, hi):
+    """What the helper accepts (create_ap's config reader mangles the rest)."""
+    return lo <= len(v) <= hi and "\\" not in v and v == v.strip() and not any(ord(c) < 32 for c in v)
+
+
+def sudoers_rule(user):
+    return (
+        "# caelestia-XTend Wi-Fi hotspot: only these two exact commands, without a password.\n"
+        f"# {HELPER_DST} is root-owned; see the comments inside it.\n"
+        f"{user} ALL=(root) NOPASSWD: {HELPER_DST} start, {HELPER_DST} stop\n"
+    )
+
+
+def hotspot_access_current(user):
+    """True if the helper (identical to ours) and our sudo rule are both in place."""
+    try:
+        same = HELPER_DST.read_bytes() == HELPER_SRC.read_bytes()
+    except OSError:
+        return False
+    listed = run(["sudo", "-n", "-l"]).stdout
+    return same and f"{HELPER_DST} start" in listed and f"{HELPER_DST} stop" in listed
+
+
+def warn_broad_rules():
+    """Point out old password-free rules for the tools the helper replaces."""
+    listed = run(["sudo", "-n", "-l"]).stdout
+    broad = [l.strip() for l in listed.splitlines()
+             if "NOPASSWD" in l and any(t in l for t in BROAD_TOOLS)]
+    if broad:
+        warn("you have a password-free sudo rule the hotspot no longer needs:")
+        for l in broad:
+            say(f"       {l}")
+        say("     It gives full root without a password (`sudo ip netns exec` runs anything).")
+        say("     Remove it from /etc/sudoers or /etc/sudoers.d/ with `sudo visudo` (XTend won't edit it).")
+
+
+def setup_hotspot_access(dry, state):
+    user = getpass.getuser()
+    if not re.fullmatch(r"[a-z_][a-z0-9_-]*\$?", user):
+        warn(f"can't write a sudo rule for the user name {user!r}; set up hotspot root access yourself")
+        return
+    if hotspot_access_current(user):
+        ok("hotspot root access is set up")
+        state["hotspot_access"] = True
+        warn_broad_rules()
+        return
+    if dry:
+        say(f"   would install {HELPER_DST} and {SUDOERS_DST} (sudo start/stop of the hotspot only)")
+        return
+    say("   The hotspot needs root to run create_ap. XTend can install a small root-owned")
+    say(f"   helper ({HELPER_DST}) and a sudo rule that lets {user} run only its start/stop.")
+    if not ask("Set up hotspot root access? (asks for your password)"):
+        warn("skipped; the hotspot won't start until this is set up (./install.py --features hotspot)")
+        return
+    if run(["sudo", "-v"], capture=False).returncode != 0:
+        warn("couldn't get sudo access; nothing was changed")
+        return
+
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        rule = Path(tmp) / "caelestia-hotspot"
+        rule.write_text(sudoers_rule(user))
+        if run(["sudo", "visudo", "-cf", str(rule)]).returncode != 0:
+            warn("the sudo rule didn't pass visudo; nothing was changed")
+            return
+        # visudo checks every sudoers file: a broken one elsewhere would make
+        # our check below fail, so find out first
+        before = run(["sudo", "visudo", "-c"])
+        if before.returncode != 0:
+            warn("your sudo configuration has problems already; fix them first (sudo visudo -c):")
+            problems = [l for l in (before.stdout + before.stderr).strip().splitlines() if not l.endswith("parsed OK")]
+            for l in problems[:5]:
+                say(f"       {l}")
+            return
+        if run(["sudo", "install", "-o", "root", "-g", "root", "-m", "755", str(HELPER_SRC), str(HELPER_DST)],
+               capture=False).returncode != 0:
+            warn(f"couldn't install {HELPER_DST}")
+            return
+        if run(["sudo", "install", "-o", "root", "-g", "root", "-m", "440", str(rule), str(SUDOERS_DST)],
+               capture=False).returncode != 0:
+            warn(f"couldn't install {SUDOERS_DST}")
+            return
+    if run(["sudo", "visudo", "-c"]).returncode != 0:
+        run(["sudo", "rm", "-f", "--", str(SUDOERS_DST)])
+        warn("sudo's configuration check failed with the new rule, so it was taken out again")
+        return
+    state["hotspot_access"] = True
+    ok(f"installed {HELPER_DST} and {SUDOERS_DST}")
+    warn_broad_rules()
+
+
+def remove_hotspot_access(state):
+    if not state.pop("hotspot_access", False):
+        return
+    # (/etc/sudoers.d isn't readable without root, so no exists() check)
+    if run(["sudo", "rm", "-f", "--", str(SUDOERS_DST), str(HELPER_DST)], capture=False).returncode == 0:
+        ok(f"removed {SUDOERS_DST} and {HELPER_DST}")
+    else:
+        warn(f"couldn't remove {SUDOERS_DST} and {HELPER_DST}; remove them with sudo rm")
 
 
 # --- Keybinds ---------------------------------------------------------------
@@ -621,6 +739,8 @@ def do_install(names, state, dry):
         setup_keybinds(chosen, True, state)
         if "cheatsheet" in chosen:
             describe_keybinds(True)
+        if "hotspot" in chosen:
+            setup_hotspot_access(True, state)
         say("\n   --check: nothing was changed")
         return 0
     if not ask("Go ahead?"):
@@ -650,6 +770,10 @@ def _install(todo, pkgs, aur, version, state):
     if "filesearch" in chosen:
         setup_plocate(False)
     setup_env(chosen, False)
+    if "hotspot" in chosen:
+        head("Hotspot root access")
+        setup_hotspot_access(False, state)
+        save_state(state)
     head("Keybinds")
     setup_keybinds(list(installed), False, state)
     save_state(state)
@@ -700,6 +824,8 @@ def do_remove(names, state, dry):
     for f in gone:
         drop_feature(f)
         installed.remove(f.name)
+    if any(f.name == "hotspot" for f in gone):
+        remove_hotspot_access(state)
     save_state(state)
     head("Keybinds")
     setup_keybinds(installed, False, state)

@@ -67,6 +67,8 @@ Nothing happens before you confirm, and everything is undone by `--uninstall`.
   (hotspot), via
   `pacman` and your AUR helper. The daily file index (`plocate-updatedb.timer`) is turned on.
   Building `create_ap` asks to import its author's PGP key; that's expected, answer yes.
+- **Hotspot root access.** With your OK, `/usr/local/bin/caelestia-hotspot` and
+  `/etc/sudoers.d/caelestia-hotspot` (see [Wi-Fi hotspot](#wi-fi-hotspot-experimental-off-by-default)).
 - **Settings.** Hotspot name/password and the Exa key go in `~/.config/caelestia/.env`, readable
   only by you. Uninstalling keeps this file.
 - **Keybinds.** `Super + /` goes in a marked block in `~/.config/caelestia/hypr-user.lua`
@@ -84,10 +86,19 @@ What was installed is recorded in `~/.config/caelestia/xtend.json`.
 
 ### Wi-Fi hotspot (experimental, off by default)
 
-The hotspot runs `create_ap`, `ip` and `iw` as root through `sudo`. **XTend doesn't set up that
-root access for you**, and you shouldn't give your user password-free `sudo` for those tools:
-`ip` in particular can be used to get a full root shell. A small, locked-down helper is planned.
-Until then, only enable the hotspot if you know how you'll handle this.
+The hotspot needs root to run `create_ap`. With your OK, the installer sets that up narrowly:
+
+- a small root-owned helper, `/usr/local/bin/caelestia-hotspot`
+  ([`system/caelestia-hotspot`](system/caelestia-hotspot)), which can only **start** or **stop**
+  the hotspot. The name and password go in on stdin and into a root-only file under `/run`, so they
+  never show up in `ps`.
+- a sudo rule, `/etc/sudoers.d/caelestia-hotspot`, that lets your user run exactly those two
+  commands without a password. The rule is checked with `visudo` before and after it's installed.
+
+That's all the hotspot can do as root. Don't give your user password-free `sudo` for `create_ap`,
+`ip`, `iw` or `killall` instead: `sudo ip netns exec` alone runs any command as root. If you have
+such a rule from an older setup, the installer points it out so you can remove it.
+`./install.py --remove hotspot` removes the helper and the rule again.
 
 Set the name and password in `~/.config/caelestia/.env`:
 
